@@ -28,6 +28,8 @@ class ReverseProxied(object):
             path_info = environ['PATH_INFO']
             if path_info.startswith(script_name):
                 environ['PATH_INFO'] = path_info[len(script_name):]
+                if environ['PATH_INFO'].startswith('//'):
+                    environ['PATH_INFO'] = environ['PATH_INFO'][1:] 
 
         scheme = environ.get('HTTP_X_SCHEME', '')
         if scheme:
