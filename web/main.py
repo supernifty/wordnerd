@@ -16,10 +16,6 @@ app.config.from_pyfile('config.py')
 app.secret_key = 'ducks in space'
 app.wsgi_app = proxy.ReverseProxied(app.wsgi_app)
 
-@app.route('/init')
-def init():
-    pass
-
 @app.route('/', methods=['GET', 'POST'])
 def main():
     '''
