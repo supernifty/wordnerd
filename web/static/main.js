@@ -102,19 +102,26 @@ var
 
   on_words = function(ev) {
     var search = $('#search').val();
-    set_status('Finding ' + search);
+    set_status('Finding words matching "' + search + '"...');
     var tx = g.db.transaction("words"),
       words = tx.objectStore("words"),
       idx = words.index("len"),
-      range = IDBKeyRange.only(search.length);
+      range = IDBKeyRange.only(search.length),
+      tested = 0;
     g.words = [];
     g.word_ids = {};
+    tested = 0;
+    search_lower = search.toLowerCase();
     idx.openCursor(range).onsuccess = function(ev) {
       var cursor = ev.target.result;
       if (cursor) {
-        if (is_match(search.toLowerCase(), cursor.value.word.toLowerCase())) {
+        if (is_match(search_lower, cursor.value.word.toLowerCase())) {
           g.words.push(cursor.value.word);
           g.word_ids[cursor.value.word] = cursor.value.id;
+        }
+        tested += 1;
+        if (tested % 1000 == 0) {
+          set_status('Searched ' + tested + ", found " + g.words.length);
         }
         cursor.continue();
       }
@@ -126,17 +133,18 @@ var
 
   on_definition = function(ev) {
     var search = $('#search').val();
-    set_status('Finding ' + search);
+    set_status('Finding definitions containing "' + search + '"...');
     var tx = g.db.transaction(["definitions", "words"]),
       defs = tx.objectStore("definitions"),
       words = tx.objectStore("words"),
       tested = 0;
     g.words = [];
     g.word_ids = {};
+    search_lower = search.toLowerCase();
     defs.openCursor().onsuccess = function(ev) {
       var cursor = ev.target.result;
       if (cursor) {
-        if (is_def(search, cursor.value.def.toLowerCase())) {
+        if (is_def(search_lower, cursor.value.def.toLowerCase())) {
           words.get(cursor.value.word_id).onsuccess = function(ev) {
             g.words.push(ev.target.result.word);
             g.word_ids[ev.target.result.word] = cursor.value.word_id;
@@ -144,7 +152,7 @@ var
         }
         tested += 1;
         if (tested % 10000 == 0) {
-          set_status('Searched ' + tested);
+          set_status('Searched ' + tested + ", found " + g.words.length);
         }
         cursor.continue();
       }
@@ -160,7 +168,7 @@ var
 
   on_anagram = function(ev) {
     var search = $('#search').val();
-    set_status('Finding ' + search);
+    set_status('Finding anagrams of "' + search + '"...');
     var tx = g.db.transaction("words"),
       words = tx.objectStore("words"),
       idx = words.index("len"),
@@ -211,7 +219,6 @@ var
     idx.openCursor(range).onsuccess = function(ev) {
       var cursor = ev.target.result;
       if (cursor) {
-        // Do something with the entries.
         g.defs[cursor.value.def] = true;
         cursor.continue();
       }
